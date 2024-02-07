@@ -50,7 +50,7 @@ class MandelbrotSet:
 # =============== MAIN ===============
 
 # On peut changer les paramètres des deux prochaines lignes
-mandelbrot_set = MandelbrotSet(max_iterations=50, escape_radius=10)
+mandelbrot_set = MandelbrotSet(max_iterations=500, escape_radius=10)
 width, height = 1024, 1024
 
 scaleX = 3./width
@@ -61,7 +61,7 @@ comm = MPI.COMM_WORLD.Dup()
 rank = comm.Get_rank()
 size = comm.Get_size()-1
 
-slice = int(height/size)
+slice = int(height/(size+1))
 
 tab = np.empty((width, slice), dtype=np.double)
 
@@ -95,4 +95,4 @@ if rank == 0:
     image = Image.fromarray(np.uint8(matplotlib.cm.plasma(convergence.T)*255))
     fin = time()
     print(f"Temps de constitution de l'image : {fin-deb}")
-    #image.show()
+    image.show()

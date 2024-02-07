@@ -81,6 +81,9 @@ Speedup = 4.55
 La méthode maître esclave est plus efficace.
 Ici, on envoie successivement à chaque processus les lignes en faisant un cycle d'envoi/récupération => gain de temps car on construit la matrice numpy en même temps qu'on calcule
 
+
+après modification du code, master_slave semble assez lent, peut-être à cause du nombre de send/recv
+
 ## Produit matrice-vecteur
 
 S'il y a nbp tâches, on a Nloc = N/nbp

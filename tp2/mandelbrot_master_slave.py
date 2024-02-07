@@ -10,7 +10,7 @@ from mpi4py import MPI
 
 @dataclass
 class MandelbrotSet:
-    max_iterations: int
+    max_iterations: int = 500
     escape_radius:  float = 2.0
 
     def __contains__(self, c: complex) -> bool:
@@ -50,7 +50,7 @@ class MandelbrotSet:
 # =============== MAIN ===============
 
 # On peut changer les paramètres des deux prochaines lignes
-mandelbrot_set = MandelbrotSet(max_iterations=50, escape_radius=10)
+mandelbrot_set = MandelbrotSet(max_iterations=500, escape_radius=10)
 width, height = 1024, 1024
 
 scaleX = 3./width
@@ -62,17 +62,33 @@ rank = comm.Get_rank()
 size = comm.Get_size() -1
 
 
-tag = "toto"
+
 
 if rank == 0:
     convergence = np.empty((width, height), dtype=np.double)
     deb = time()
-    for y in range(height):
-        comm.send(y, dest = y%size +1)
-        if y>=size:
-            convergence[:,y-size] = comm.recv( source = y%size+1)
-    # for y in range(height-size,height):
-    #     convergence[:, y] = comm.recv(y%size+1)
+    y=0
+    stat : MPI.Status = MPI.Status()
+    while y < height:
+        if y<size:
+            comm.send(y, dest = y+1)
+        else:
+            line = comm.recv(status = stat)
+            slaveRk = stat.source
+            index = stat.Get_tag()
+            
+            convergence[:, index] = line 
+
+            comm.send(y, dest = slaveRk)
+
+        y+=1
+    # for y in range(height):
+    #     comm.send(y, dest = y%size +1, tag = )
+         
+    #     if y>=size:
+    #         convergence[:,y-size] = comm.recv( source = y%size+1)
+    # # for y in range(height-size,height):
+    # #     convergence[:, y] = comm.recv(y%size+1)
 
     fin = time()
     print(f"Temps du calcul de l'ensemble de Mandelbrot : {fin-deb}")
@@ -95,4 +111,4 @@ else:
         for x in range(width):
             c = complex(-2. + scaleX*x, -1.125 + scaleY * y)
             convergence[x] = mandelbrot_set.convergence(c, smooth=True)
-        comm.send(convergence, dest = 0)
+        comm.send(convergence, dest = 0, tag = y)
