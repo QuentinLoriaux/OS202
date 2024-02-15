@@ -10,7 +10,7 @@ from mpi4py import MPI
 
 @dataclass
 class MandelbrotSet:
-    max_iterations: int = 500
+    max_iterations: int
     escape_radius:  float = 2.0
 
     def __contains__(self, c: complex) -> bool:
@@ -50,7 +50,7 @@ class MandelbrotSet:
 # =============== MAIN ===============
 
 # On peut changer les paramètres des deux prochaines lignes
-mandelbrot_set = MandelbrotSet(max_iterations=500, escape_radius=10)
+mandelbrot_set = MandelbrotSet(max_iterations=50, escape_radius=10)
 width, height = 1024, 1024
 
 scaleX = 3./width
@@ -59,44 +59,24 @@ scaleY = 2.25/height
 #Parallélisation
 comm = MPI.COMM_WORLD.Dup()
 rank = comm.Get_rank()
-size = comm.Get_size() -1
+size = comm.Get_size()-1
 
-
+slice = int(height/size)
 
 
 if rank == 0:
     convergence = np.empty((width, height), dtype=np.double)
     deb = time()
-    y=0
-    stat : MPI.Status = MPI.Status()
-    while y < height:
-        if y<size:
-            comm.send(y, dest = y+1)
-        else:
-            line = comm.recv(status = stat)
-            slaveRk = stat.source
-            index = stat.Get_tag()
-            
-            convergence[:, index] = line 
-
-            comm.send(y, dest = slaveRk)
-
-        y+=1
-    # for y in range(height):
-    #     comm.send(y, dest = y%size +1, tag = )
-         
-    #     if y>=size:
-    #         convergence[:,y-size] = comm.recv( source = y%size+1)
-    # # for y in range(height-size,height):
-    # #     convergence[:, y] = comm.recv(y%size+1)
-
+    for k in range(1,size+1):
+        print(k)
+        conv = comm.recv(source=k)
+        convergence[:, (k-1)*slice:k*slice] = conv
     fin = time()
     print(f"Temps du calcul de l'ensemble de Mandelbrot : {fin-deb}")
 
 
     # Constitution de l'image résultante :
     deb = time()
-    #............
     image = Image.fromarray(np.uint8(matplotlib.cm.plasma(convergence.T)*255))
     fin = time()
     print(f"Temps de constitution de l'image : {fin-deb}")
@@ -104,11 +84,12 @@ if rank == 0:
 
 else:
     # Calcul de l'ensemble de mandelbrot :
-    convergence = np.empty(width, dtype=np.double)
+    convergence = np.empty((width, slice), dtype=np.double)
     k=0
-    while True:
-        y = comm.recv(source = 0)
+    for y in range((rank-1)*slice, rank*slice):
         for x in range(width):
             c = complex(-2. + scaleX*x, -1.125 + scaleY * y)
-            convergence[x] = mandelbrot_set.convergence(c, smooth=True)
-        comm.send(convergence, dest = 0, tag = y)
+            convergence[x, k] = mandelbrot_set.convergence(c, smooth=True)
+        k+=1
+    comm.send(convergence, dest=0)
+
