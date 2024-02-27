@@ -161,16 +161,10 @@ if __name__ == '__main__':
         "u" : ((200,200), [(101,101),(102,102),(103,102),(103,101),(104,103),(105,103),(105,102),(105,101),(105,105),(103,105),(102,105),(101,105),(101,104)]),
         "flat" : ((200,400), [(80,200),(81,200),(82,200),(83,200),(84,200),(85,200),(86,200),(87,200), (89,200),(90,200),(91,200),(92,200),(93,200),(97,200),(98,200),(99,200),(106,200),(107,200),(108,200),(109,200),(110,200),(111,200),(112,200),(114,200),(115,200),(116,200),(117,200),(118,200)])
     }
-    choice = 'space_ship'
+    choice = 'pulsar'
     if len(sys.argv) > 1 :
         choice = sys.argv[1]
-    resx = 800
-    resy = 800
-    if len(sys.argv) > 3 :
-        resx = int(sys.argv[2])
-        resy = int(sys.argv[3])
-    print(f"Pattern initial choisi : {choice}")
-    print(f"resolution ecran : {resx,resy}")
+
     try:
         init_pattern = dico_patterns[choice]
     except KeyError:
@@ -178,42 +172,105 @@ if __name__ == '__main__':
         exit(1)
 
     
-
+    xLen, yLen = init_pattern[0]
 
 
 
   
 
 
-    grid = Grille(*init_pattern)
+    
 
-    if rank == 0:    
+    if rank == 0:
+        resx = 800
+        resy = 800
+        if len(sys.argv) > 3 :
+            resx = int(sys.argv[2])
+            resy = int(sys.argv[3])
+        print(f"Pattern initial choisi : {choice}")
+        print(f"resolution ecran : {resx,resy}")
+
+        grid = Grille(*init_pattern)
+        print(xLen)
+        print(xLen/2)
+        print(yLen)
+        sendCol = grid.cells[:xLen//2,:]
+        comm.send(sendCol, dest = 1)
+        sendCol = grid.cells[xLen//2:,:]
+        comm.send(sendCol, dest = 2)
         appli = App((resx, resy), grid)
+    
+    if rank == 1:
+        grid = Grille((xLen//2 +2,yLen))
+        rightGrid = comm.recv(source = 0)
+        print(rightGrid.shape)
+        print(grid.cells.shape)
+        grid.cells[1:xLen//2+1,:] = rightGrid
+
+    if rank == 2:
+        grid = Grille((xLen//2 +3,yLen))
+        rightGrid = comm.recv(source = 0)
+        # print(rightGrid.shape)
+        grid.cells[1:xLen//2+2,:] = rightGrid
 
     
     while True:
         #time.sleep(0.5) # A régler ou commenter pour vitesse maxi
-        
+        # pg.time.wait(200)
         if rank ==1:
+            sendCol = np.copy(grid.cells[1,:])
+            comm.send(sendCol, dest = 2)
+            sendCol = np.copy(grid.cells[-2,:])
+            comm.send(sendCol, dest = 2)
+            colfin = comm.recv(source = 2)
+            coldeb = comm.recv(source = 2)
+
+            grid.cells[0,:] = coldeb
+            grid.cells[-1,:] = colfin
             diff = grid.compute_next_iteration()
             comm.send(diff, dest = 0)
         
         if rank ==2:
-            print("do stuff")
+            colfin = comm.recv(source = 1)
+            coldeb = comm.recv(source = 1)
+            sendCol = np.copy(grid.cells[1,:])
+            comm.send(sendCol, dest = 1)
+            sendCol = np.copy(grid.cells[-2,:])
+            comm.send(sendCol, dest = 1)
+
+        if rank != 0:
+            grid.cells[0,:] = coldeb
+            grid.cells[-1,:] = colfin
+            diff = grid.compute_next_iteration()
+            # xSize, ySize = grid.cells.shape
+            # if len(diff)>0:
+            #     for k in range(len(diff)):
+            #         val = diff[k][0]
+            #         if val==0 or val==xSize-1 :
+            #             diff = np.delete(diff,k)
+            comm.send(diff, dest = 0)
         
         if rank ==0:
             t1 = time.time()
-            diff = comm.recv(source=1)
+            diff1 = comm.recv(source=1)
+            diff2 = comm.recv(source=2)
             t2 = time.time()
+            # print(diff1.shape)
+            # print(diff2.shape)
+            if len(diff1) > 0 :
+                grid.cells[diff1[:,0],diff1[:,1]] = 1- grid.cells[diff1[:,0], diff1[:,1]]
+            if len(diff2) > 0 :
+                grid.cells[diff2[:,0],diff2[:,1]] = 1- grid.cells[diff2[:,0], diff2[:,1]]
 
-            grid.cells[diff[:,0],diff[:,1]] = 1- grid.cells[diff[:,0], diff[:,1]]
             appli.draw()
             t3 = time.time()
+
+            print(f"Temps calcul prochaine generation : {t2-t1:2.2e} secondes, temps affichage : {t3-t2:2.2e} secondes\r", end='');
         
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
                 break
         
-        if rank == 0:
-            print(f"Temps calcul prochaine generation : {t2-t1:2.2e} secondes, temps affichage : {t3-t2:2.2e} secondes\r", end='');
+
+            
