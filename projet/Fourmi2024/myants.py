@@ -248,7 +248,7 @@ if __name__ == "__main__":
 
         #for ants
         sprites = []
-        img = pg.image.load("ants.png").convert_alpha()
+        img = pg.image.load("img/ants.png").convert_alpha()
         for i in range(0, 32, 8):
             sprites.append(pg.Surface.subsurface(img, i, 0, 8, 8))
 
@@ -298,10 +298,11 @@ if __name__ == "__main__":
             screen.blit(mazeImg, (0, 0))
             ants.display(screen, sprites)
             pg.display.update()
+            # pg.time.wait(200)
 
             #save img
             if food_counter == 1 and not snapshop_taken:
-                pg.image.save(screen, "MyFirstFood.png")
+                pg.image.save(screen, "img/MyFirstFood.png")
                 snapshop_taken = True
             
             if not playing :
@@ -325,8 +326,8 @@ if __name__ == "__main__":
             playing = comm.recv(source = 0)
 
 
-            # pg.time.wait(200)
-            print(f"FPS : {1./(end-deb):6.2f}, nourriture : {food_counter:7d}", end='\r')
+            
+            print(f"FPS : {1./(end-deb):6.2f}, nourriture : {food_counter:7d}\n", end='\r')
 
 
 #mpiexec -n 2 python3 myants.py

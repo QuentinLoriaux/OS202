@@ -62,7 +62,7 @@ class Maze:
             else:
                 historic.pop()
         #  Load patterns for maze display :
-        img = pg.image.load("cases.png").convert_alpha()
+        img = pg.image.load("img/cases.png").convert_alpha()
         for i in range(0, 128, 8):
             self.cases_img.append(pg.Surface.subsurface(img, i, 0, 8, 8))
 
@@ -89,7 +89,7 @@ if __name__  == "__main__":
     t1 = time.time()
     maze = Maze(dimensions, 12345)
     t2 = time.time()
-    print(f"Temps construction labyrinthe : {t2-t1} secondes")
+    print(f"Temps construction labyrinthe : {t2-t1} secondes\n")
 
     screen.fill((255, 255, 255))
     mazeImg = maze.display()
