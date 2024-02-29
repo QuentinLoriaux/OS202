@@ -18,11 +18,14 @@ pas à faire : paralléliser grille
 
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MTK truc bidule_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
 
 # Compte Rendu
 
 Quentin Loriaux - Samy Vincent
+
+executer cette commande :
+mpirun -np 1 python3 gui.py : -np 1 python3 grid.py
 
 ## Analyse a priori
 
@@ -45,3 +48,6 @@ for smp in $(seq 1 200) ; do
 done
 ```
 
+J'imagine qu'on peut mesurer :
+"time before first food par ex"
+ou "time before 20 food" bref...
