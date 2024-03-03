@@ -14,33 +14,23 @@ if __name__ == "__main__":
     import sys
     import time
     
-    size_laby = 25, 25
-    if len(sys.argv) > 2:
-        size_laby = int(sys.argv[1]),int(sys.argv[2])
-
-    playing = True
+    #receive parameters
+    size_laby, max_life, alpha, beta = comm.recv(source = 0)
+    
+    
+    
     nb_ants = size_laby[0]*size_laby[1]//4
     pos_food = size_laby[0]-1, size_laby[1]-1
     pos_nest = 0, 0
 
-
-    max_life = 500
-    if len(sys.argv) > 3:
-        max_life = int(sys.argv[3])
-    
-    alpha = 0.9
-    beta  = 0.99
-    if len(sys.argv) > 4:
-        alpha = float(sys.argv[4])
-    if len(sys.argv) > 5:
-        beta = float(sys.argv[5])
-
-
+    maze = comm.recv(source = 0)
     ants = myAnts.Colony(nb_ants, pos_nest, max_life)
     unloaded_ants = np.array(range(nb_ants))
     pherom = myPheromone.Pheromon(size_laby, pos_food, alpha, beta)
+    
     food_counter = 0
-    maze = comm.recv(source = 0)
+    playing = True
+    
 
 
     

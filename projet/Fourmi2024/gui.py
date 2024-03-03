@@ -11,7 +11,7 @@ from mpi4py import MPI
 
 comm = MPI.COMM_WORLD.Dup()
 rank = comm.Get_rank()
-size = comm.Get_size() -1
+size = comm.Get_size()
 
 
 def loadAssets():
@@ -65,10 +65,29 @@ if __name__ == "__main__":
     
     pg.init()
 
-    # screen init
+
+    #treat inputs
     size_laby = 25, 25
     if len(sys.argv) > 2:
         size_laby = int(sys.argv[1]),int(sys.argv[2])
+
+    max_life = 500
+    if len(sys.argv) > 3:
+        max_life = int(sys.argv[3])
+    
+    alpha = 0.9
+    if len(sys.argv) > 4:
+        alpha = float(sys.argv[4])
+
+    beta  = 0.99
+    if len(sys.argv) > 5:
+        beta = float(sys.argv[5])
+
+    #send parameters
+    for k in range(1, size) :
+        comm.send((size_laby, max_life, alpha, beta), dest = k)
+    
+    # screen init
     resolution = size_laby[1]*8, size_laby[0]*8
     screen = pg.display.set_mode(resolution)
 
