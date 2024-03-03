@@ -2,7 +2,6 @@
 """
 import numpy as np
 import direction as d
-import pygame as pg
 
 
 class Pheromon:

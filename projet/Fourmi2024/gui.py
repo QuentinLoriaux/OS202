@@ -9,10 +9,11 @@ from mpi4py import MPI
 # os.environ["OMP_NUM_THREADS"] = "1"
 # os.environ["MKL_NUM_THREADS"] = "1"
 
-comm = MPI.COMM_WORLD.Dup()
+comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+workers = comm.Split(0)
 
 def loadAssets():
     #  Load patterns for maze display :
@@ -84,9 +85,8 @@ if __name__ == "__main__":
         beta = float(sys.argv[5])
 
     #send parameters
-    for k in range(1, size) :
-        comm.send((size_laby, max_life, alpha, beta), dest = k)
-    
+    comm.bcast((size_laby, max_life, alpha, beta), root=0)
+
     # screen init
     resolution = size_laby[1]*8, size_laby[0]*8
     screen = pg.display.set_mode(resolution)
@@ -95,14 +95,15 @@ if __name__ == "__main__":
     loadAssets()
 
     # maze init
-    a_maze = myMaze.Maze(size_laby, 12345)  
-    comm.send(a_maze.maze, dest = 1)
+    a_maze = myMaze.Maze(size_laby, 12345)
+    comm.bcast(a_maze.maze, root = 0)
     mazeImg = displayMaze(a_maze.maze)# Le labyrinthe ne change pas
 
 
     playing = True
     snapshop_taken = False
-           
+    ants = [0]*(size-1)
+    zeros = np.zeros((size_laby[0]+2, size_laby[1]+2),  dtype=np.double)
 
     
     while playing:
@@ -113,13 +114,18 @@ if __name__ == "__main__":
                 playing = False
                 
         #communication
-        pherom, ants, food_counter = comm.recv(source = 1)
-        comm.send(playing, dest = 1)
+        # pherom, ants, food_counter = comm.recv(source = 1)
+        ants = comm.gather(None, root = 0)
+        food_counter = sum([ants[k][1] for k in range(1,size)])
+        pherom = comm.reduce(zeros, op = MPI.SUM, root = 0)
+        # comm.Reduce([pherom,MPI.DOUBLE], [pherom,MPI.DOUBLE], MPI.SUM, root = 0)
+        comm.bcast(playing, root = 0)
 
         #display
         displayPheromon(pherom,screen)
         screen.blit(mazeImg, (0, 0))
-        displayAnts(ants, screen)
+        for k in range(1,size):
+            displayAnts(ants[k][0], screen)
         pg.display.update()
         # pg.time.wait(200)
 

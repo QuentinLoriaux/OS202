@@ -3,7 +3,7 @@ Creates a two-dimensional maze where each cell in the maze is defined by the sum
 (North = 1, East = 2, South = 4, West = 8), with each cell corresponding to a value stored in a two-dimensional array.
 """
 import numpy as np
-import pygame as pg
+
 
 NORTH = 1
 EAST  = 2
@@ -63,6 +63,7 @@ class Maze:
 
 
 if __name__  == "__main__":
+    import pygame as pg
     import time
     dimensions = (50, 80)
     pg.init()
