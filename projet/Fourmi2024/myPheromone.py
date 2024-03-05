@@ -27,4 +27,4 @@ class Pheromon:
                           self.pheromon[the_position[0], the_position[1]+1] if has_WESN_exits[d.DIR_NORTH] else 0.], dtype=np.double)
         pheromones = np.maximum(cells, 0.)
         self.pheromon[the_position[0]+1, the_position[1]+1] = self.alpha*np.max(pheromones) + (1-self.alpha)*0.25*pheromones.sum()
-
+    #change stuff?

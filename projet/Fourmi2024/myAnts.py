@@ -192,7 +192,7 @@ class Colony:
             ants_at_food = unloaded_ants[ants_at_food_loc]
             self.is_loaded[ants_at_food] = True
 
-    def advance(self, maze, pos_food, pos_nest, pheromones, food_counter=0):
+    def advance(self, maze, pos_food, pos_nest, pheromones, old_pheromones, food_counter=0):
         loaded_ants = np.nonzero(self.is_loaded == True)[0]
         unloaded_ants = np.nonzero(self.is_loaded == False)[0]
         if loaded_ants.shape[0] > 0:
@@ -206,7 +206,7 @@ class Colony:
         has_south_exit = np.bitwise_and(maze[old_pos_ants[:, 0], old_pos_ants[:, 1]], myMaze.SOUTH) > 0
         has_west_exit = np.bitwise_and(maze[old_pos_ants[:, 0], old_pos_ants[:, 1]], myMaze.WEST) > 0
         # Marking pheromones:
-        [pheromones.mark(self.historic_path[i, self.age[i], :],
+        [old_pheromones.mark(self.historic_path[i, self.age[i], :],
                          [has_north_exit[i], has_east_exit[i], has_west_exit[i], has_south_exit[i]]) for i in range(self.directions.shape[0])]
         return food_counter
 

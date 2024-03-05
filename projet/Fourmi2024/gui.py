@@ -121,7 +121,8 @@ if __name__ == "__main__":
         ants = comm.gather(None, root = 0)
         food_counter = sum([ants[k][1] for k in range(1,size)])
         comm.Reduce([zeros,MPI.DOUBLE], [pherom,MPI.DOUBLE], MPI.SUM, root = 0)
-        comm.bcast(playing, root = 0)
+        copyPherom = pherom.copy()
+        comm.bcast((playing, copyPherom), root = 0)
         end = time.time()
 
         #display
@@ -132,11 +133,12 @@ if __name__ == "__main__":
         pg.display.update()
         # pg.time.wait(200)
 
+
+        #display info
         sys.stdout.write('\r' + "nourriture " + str(food_counter) )
         if (end-deb<shortestTime):
             shortestTime = end-deb
             sys.stdout.write("         time Display : " + str(shortestTime) )
-        # print(f"nourriture : {food_counter:7d}", end='\r')
         sys.stdout.flush()
 
         #save img
@@ -145,6 +147,7 @@ if __name__ == "__main__":
             snapshop_taken = True
         
         if not playing :
+            print('\n')
             pg.quit()
             
             

@@ -21,16 +21,12 @@ if __name__ == "__main__":
     import time
     
     #receive parameters
-    # size_laby, max_life, alpha, beta = comm.recv(source = 0)
-    # size_laby, max_life, alpha, beta  = None, None, None, None
-    # data = None
     size_laby, max_life, alpha, beta =comm.bcast(None, root=0)
-    # size_laby, max_life, alpha, beta = data
-    # print(size_laby)
     
+
+
     nb_ants = size_laby[0]*size_laby[1]//4
     nb_ants //= wSize
-    # print(nb_ants)
     pos_food = size_laby[0]-1, size_laby[1]-1
     pos_nest = 0, 0
 
@@ -38,12 +34,12 @@ if __name__ == "__main__":
     ants = myAnts.Colony(nb_ants, pos_nest, max_life)
     # unloaded_ants = np.array(range(nb_ants))
     pheromones = myPheromone.Pheromon(size_laby, pos_food, alpha, beta)
+    old_pheromones = myPheromone.Pheromon(size_laby, pos_food, alpha, beta)
     
     food_counter = 0
     playing = True
     shortestTime = 100000
     
-    # print(wRank)
 
 
     
@@ -55,17 +51,18 @@ if __name__ == "__main__":
             
         #compute
         deb = time.time()
-        food_counter = ants.advance(maze, pos_food, pos_nest, pheromones, food_counter)
-        pheromones.do_evaporation(pos_food)
+        food_counter = ants.advance(maze, pos_food, pos_nest, pheromones, old_pheromones, food_counter)
+        old_pheromones.do_evaporation(pos_food)
         end = time.time()
 
         #communication
         comm.gather((ants, food_counter), root = 0)
-        # comm.reduce(pheromones.pheromon, op = MPI.SUM, root = 0)
-        comm.Reduce([pheromones.pheromon,MPI.DOUBLE], None, MPI.SUM, root = 0)
-        # comm.send((pherom.pheromon, ants, food_counter), dest = 0)
-        playing = comm.bcast(None, root = 0)
-
+        copyPheromon = old_pheromones.pheromon.copy()
+        comm.Reduce([copyPheromon,MPI.DOUBLE], None, MPI.SUM, root = 0)
+        playing, pheromones.pheromon = comm.bcast(None, root = 0)
+        # print(pheromones.pheromon)
+        
+        
 
         # if wRank == 0:
         #     if (end-deb<shortestTime):
