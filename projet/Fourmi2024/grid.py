@@ -3,6 +3,10 @@ import myPheromone
 import myAnts
 from mpi4py import MPI
 
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
@@ -37,8 +41,9 @@ if __name__ == "__main__":
     
     food_counter = 0
     playing = True
+    shortestTime = 100000
     
-    print(wRank)
+    # print(wRank)
 
 
     
@@ -56,12 +61,15 @@ if __name__ == "__main__":
 
         #communication
         comm.gather((ants, food_counter), root = 0)
-        comm.reduce(pheromones.pheromon, op = MPI.SUM, root = 0)
-        # comm.Reduce([pherom,MPI.DOUBLE], [pherom,MPI.DOUBLE], MPI.SUM, root = 0)
+        # comm.reduce(pheromones.pheromon, op = MPI.SUM, root = 0)
+        comm.Reduce([pheromones.pheromon,MPI.DOUBLE], None, MPI.SUM, root = 0)
         # comm.send((pherom.pheromon, ants, food_counter), dest = 0)
         playing = comm.bcast(None, root = 0)
 
 
-        
-        print(f"FPS : {1./(end-deb):6.2f}, nourriture : {food_counter:7d}\n", end='\r')
-
+        # if wRank == 0:
+        #     if (end-deb<shortestTime):
+        #         shortestTime = end-deb
+            # print(f"maxFPS worker 0: {1./shortestTime:6.2f}", end='\r')
+                # sys.stdout.write("   time Worker 0 : " + str(shortestTime) + '\r')
+                # sys.stdout.flush()

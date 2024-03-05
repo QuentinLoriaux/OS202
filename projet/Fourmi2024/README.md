@@ -13,8 +13,9 @@ Faire le speedup, graphe, analyse
 
 affichage/calcul
 paralléliser fourmis
-pas à faire : paralléliser grille
+pas à faire : paralléliser phéromones
     mais pistes réflexion dessus
+pas pareil de paralléliser grille/ paralléliser fourmis
 
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -48,7 +49,7 @@ C'est surement ça la partie laby à pas implémenter
 
 ## Problèmes...
 
-utiliser comm.reduce ou éviter la granularité avec un unique comm.gather (entre gui/grille)
+utiliser comm.Reduce ou éviter la granularité avec un unique comm.gather (entre gui/grille)
 
 
 ## trucs à repiquer

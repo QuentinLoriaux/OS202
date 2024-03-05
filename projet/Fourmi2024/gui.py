@@ -5,9 +5,9 @@ import pygame as pg
 
 from mpi4py import MPI
 
-# import os
-# os.environ["OMP_NUM_THREADS"] = "1"
-# os.environ["MKL_NUM_THREADS"] = "1"
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -77,6 +77,7 @@ if __name__ == "__main__":
         max_life = int(sys.argv[3])
     
     alpha = 0.9
+    # alpha = 1
     if len(sys.argv) > 4:
         alpha = float(sys.argv[4])
 
@@ -102,8 +103,10 @@ if __name__ == "__main__":
 
     playing = True
     snapshop_taken = False
+    shortestTime = 1000000
     ants = [0]*(size-1)
     zeros = np.zeros((size_laby[0]+2, size_laby[1]+2),  dtype=np.double)
+    pherom = np.zeros((size_laby[0]+2, size_laby[1]+2),  dtype=np.double)
 
     
     while playing:
@@ -114,12 +117,12 @@ if __name__ == "__main__":
                 playing = False
                 
         #communication
-        # pherom, ants, food_counter = comm.recv(source = 1)
+        deb = time.time()
         ants = comm.gather(None, root = 0)
         food_counter = sum([ants[k][1] for k in range(1,size)])
-        pherom = comm.reduce(zeros, op = MPI.SUM, root = 0)
-        # comm.Reduce([pherom,MPI.DOUBLE], [pherom,MPI.DOUBLE], MPI.SUM, root = 0)
+        comm.Reduce([zeros,MPI.DOUBLE], [pherom,MPI.DOUBLE], MPI.SUM, root = 0)
         comm.bcast(playing, root = 0)
+        end = time.time()
 
         #display
         displayPheromon(pherom,screen)
@@ -128,6 +131,13 @@ if __name__ == "__main__":
             displayAnts(ants[k][0], screen)
         pg.display.update()
         # pg.time.wait(200)
+
+        sys.stdout.write('\r' + "nourriture " + str(food_counter) )
+        if (end-deb<shortestTime):
+            shortestTime = end-deb
+            sys.stdout.write("         time Display : " + str(shortestTime) )
+        # print(f"nourriture : {food_counter:7d}", end='\r')
+        sys.stdout.flush()
 
         #save img
         if food_counter == 1 and not snapshop_taken:
