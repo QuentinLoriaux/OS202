@@ -108,6 +108,7 @@ if __name__ == "__main__":
                 playing = False
                 
         #communication
+        comm.barrier()
         deb = time.time()
         ants = comm.gather(None, root = 0)
         food_counter = sum([ants[k][1] for k in range(1,size)])

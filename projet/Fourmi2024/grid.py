@@ -49,6 +49,7 @@ if __name__ == "__main__":
         execution_times.append(end - deb)
 
         #communication
+        comm.barrier()
         deb = time.time()
         comm.gather((ants, food_counter), root = 0)
         copyPheromon = old_pheromones.pheromon.copy()
