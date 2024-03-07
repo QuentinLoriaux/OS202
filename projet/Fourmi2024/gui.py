@@ -56,16 +56,11 @@ def displayPheromon(pheromon, screen):
     [[screen.fill(getColor(pheromon, i, j), (8*(j-1), 8*(i-1), 8, 8)) for j in range(1, pheromon.shape[1]-1)] for i in range(1, pheromon.shape[0]-1)]
 
 
-
-
-
-
 if __name__ == "__main__":
     import sys
     import time
     
     pg.init()
-
 
     #treat inputs
     size_laby = 25, 25
@@ -100,18 +95,14 @@ if __name__ == "__main__":
     comm.bcast(a_maze.maze, root = 0)
     mazeImg = displayMaze(a_maze.maze)# Le labyrinthe ne change pas
 
-
     playing = True
     snapshop_taken = False
     shortestTime = 1000000
     ants = [0]*(size-1)
     zeros = np.zeros((size_laby[0]+2, size_laby[1]+2),  dtype=np.double)
     pherom = np.zeros((size_laby[0]+2, size_laby[1]+2),  dtype=np.double)
-
-    
+    communication_times = []
     while playing:
-
-
         for event in pg.event.get():
             if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
                 playing = False
@@ -124,6 +115,7 @@ if __name__ == "__main__":
         copyPherom = pherom.copy()
         comm.bcast((playing, copyPherom), root = 0)
         end = time.time()
+        communication_times.append(end - deb)
 
         #display
         displayPheromon(pherom,screen)
@@ -133,14 +125,13 @@ if __name__ == "__main__":
         pg.display.update()
         # pg.time.wait(200)
 
-
         #display info
-        sys.stdout.write('\r' + "nourriture " + str(food_counter) )
-        if (end-deb<shortestTime):
-            shortestTime = end-deb
-            sys.stdout.write("         time Display : " + str(shortestTime) )
-        sys.stdout.flush()
-
+        # sys.stdout.write('\r' + "nourriture " + str(food_counter) )
+        # if (end-deb<shortestTime):
+        #     shortestTime = end-deb
+        #     sys.stdout.write("         time Display : " + str(shortestTime) )
+        # sys.stdout.flush()
+        # average_time = comm.gather(None, root=0)
         #save img
         if food_counter == 1 and not snapshop_taken:
             pg.image.save(screen, "img/MyFirstFood.png")
@@ -151,6 +142,6 @@ if __name__ == "__main__":
             pg.quit()
             
             
-
+    print(sum(communication_times) / len(communication_times))
 
 #mpirun -np 1 python3 gui.py : -np 1 python3 grid.py

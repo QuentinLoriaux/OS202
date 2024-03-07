@@ -23,8 +23,6 @@ if __name__ == "__main__":
     #receive parameters
     size_laby, max_life, alpha, beta =comm.bcast(None, root=0)
     
-
-
     nb_ants = size_laby[0]*size_laby[1]//4
     nb_ants //= wSize
     pos_food = size_laby[0]-1, size_laby[1]-1
@@ -39,34 +37,32 @@ if __name__ == "__main__":
     food_counter = 0
     playing = True
     shortestTime = 100000
-    
-
-
-    
-    
-
-    
+    execution_times = []
+    communication_times = []
     while playing:
-
-            
         #compute
         deb = time.time()
         food_counter = ants.advance(maze, pos_food, pos_nest, pheromones, old_pheromones, food_counter)
         old_pheromones.do_evaporation(pos_food)
         end = time.time()
 
+        execution_times.append(end - deb)
+
         #communication
+        deb = time.time()
         comm.gather((ants, food_counter), root = 0)
         copyPheromon = old_pheromones.pheromon.copy()
         comm.Reduce([copyPheromon,MPI.DOUBLE], None, MPI.SUM, root = 0)
         playing, pheromones.pheromon = comm.bcast(None, root = 0)
-        # print(pheromones.pheromon)
+        end = time.time()
+        communication_times.append(end - deb)
         
-        
-
         # if wRank == 0:
         #     if (end-deb<shortestTime):
         #         shortestTime = end-deb
             # print(f"maxFPS worker 0: {1./shortestTime:6.2f}", end='\r')
                 # sys.stdout.write("   time Worker 0 : " + str(shortestTime) + '\r')
                 # sys.stdout.flush()
+    
+    average_time = sum(execution_times) / len(execution_times)
+    print(average_time)
